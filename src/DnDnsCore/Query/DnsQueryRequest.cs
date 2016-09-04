@@ -151,14 +151,14 @@ namespace DnDnsCore.Query
             return Resolve(host, queryType, queryClass, protocol, null);
         }
 
-        public Task<DnsQueryResponse> Resolve(string host, NsType queryType, NsClass queryClass, ProtocolType protocol, TsigMessageSecurityProvider provider)
+        public async Task<DnsQueryResponse> Resolve(string host, NsType queryType, NsClass queryClass, ProtocolType protocol, TsigMessageSecurityProvider provider)
         {
             string dnsServer = string.Empty;
 
             // Test for Unix/Linux OS
             if (Tools.IsPlatformLinuxUnix())
             {
-                dnsServer = Tools.DiscoverUnixDnsServerAddress();
+                dnsServer = await Tools.DiscoverUnixDnsServerAddress();
             }
             else
             {
@@ -172,7 +172,7 @@ namespace DnDnsCore.Query
             if (String.IsNullOrEmpty(dnsServer))
                 throw new Exception("Couldn't detect local DNS Server.");
 
-            return Resolve(dnsServer, host, queryType, queryClass, protocol, provider);
+            return await Resolve(dnsServer, host, queryType, queryClass, protocol, provider);
 
         }
 
@@ -253,28 +253,21 @@ namespace DnDnsCore.Query
                 await tcpClient.ConnectAsync(ipep.Address, ipep.Port);
 
                 NetworkStream netStream = tcpClient.GetStream();
-                BinaryReader netReader = new System.IO.BinaryReader(netStream);
 
-                netStream.Write(bDnsQuery, 0, bDnsQuery.Length);
+                await netStream.WriteAsync(bDnsQuery, 0, bDnsQuery.Length);
 
-                // wait until data is avail
-                while (!netStream.DataAvailable) ;
+                byte[] bLen = new byte[2];
+                await netStream.ReadAsync(bLen, 0, 2);
 
-                if (tcpClient.Connected && netStream.DataAvailable)
-                {
-                    // Read first two bytes to find out the length of the response
-                    byte[] bLen = new byte[2];
-                    
-                    // NOTE: The order of the next two lines matter. Do not reorder
-                    // Array indexes are also intentionally reversed
-                    bLen[1] = (byte)netStream.ReadByte();
-                    bLen[0] = (byte)netStream.ReadByte();
+                byte one = bLen[1];
+                bLen[1] = bLen[0];
+                bLen[0] = one;
 
-                    UInt16 length = BitConverter.ToUInt16(bLen, 0);
+                UInt16 length = BitConverter.ToUInt16(bLen, 0);
 
-                    recvBytes = new byte[length];
-                    netStream.Read(recvBytes, 0, length);
-                }
+                recvBytes = new byte[length];
+                await netStream.ReadAsync(recvBytes, 0, length);
+                
             }
             finally
             {

@@ -40,6 +40,7 @@ using System.Net.Sockets;
 
 using DnDnsCore.Enums;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace DnDnsCore
 {
@@ -115,7 +116,7 @@ namespace DnDnsCore
 			return ans.ToString();
 		}
 
-        public static string DiscoverUnixDnsServerAddress()
+        public static async Task<string> DiscoverUnixDnsServerAddress()
         {
             if (System.IO.File.Exists("/etc/resolv.conf"))
             {
@@ -125,7 +126,7 @@ namespace DnDnsCore
 
                     do
                     {
-                        line = sr.ReadLine().TrimStart();
+                        line = (await sr.ReadLineAsync()).TrimStart();
 
                         if (line == null)
                             break;
