@@ -115,41 +115,7 @@ namespace DnDnsCore
 			}
 			return ans.ToString();
 		}
-
-        public static async Task<string> DiscoverUnixDnsServerAddress()
-        {
-            if (System.IO.File.Exists("/etc/resolv.conf"))
-            {
-                using (var sr = new System.IO.StringReader("/etc/resolv.conf"))
-                {
-                    string line = null;
-
-                    do
-                    {
-                        line = (await sr.ReadLineAsync()).TrimStart();
-
-                        if (line == null)
-                            break;
-
-                        if (line.StartsWith("nameserver") && line.Length > 11)
-                        {
-                            line = line.Substring(10).Trim();
-                            if (!string.IsNullOrEmpty(line))
-                            {
-                                sr.Dispose();
-                                return line;
-                            }
-                        }
-
-                    }
-                    while (line != null);
-
-                    sr.Dispose();
-                }
-            }
-            return string.Empty;
-        }
-
+        
         public static IPAddressCollection DiscoverDnsServerAddresses()
         {
             NetworkInterface[] arrNetworkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
@@ -179,43 +145,6 @@ namespace DnDnsCore
 
             return null;
         }
-
-        //public static uint ByteToUInt(byte[] theByte)
-        //{
-        //    uint l = 0;
-
-        //    for (int i = 0; i < theByte.Length; i++)
-        //    {
-        //        l += (uint)theByte[(theByte.Length - i) - 1] << i * 8;
-        //    }
-			
-        //    return l;
-        //}
-
-        // Use BitConverter.GetBytes()
-        //public static byte[] IntToByteArray(uint theInt)
-        //{
-        //    byte[] byteArray = new byte[4];
-        //    int i;
-        //    int shift;
-
-        //    for (i = 0, shift = 24; i < 4; i++, shift -= 8)
-        //        byteArray[i] = (byte)(0xFF & (theInt >> shift));
-
-        //    return byteArray;
-        //}
-
-        // use BitConverter.GetBytes()
-        //public static byte[] UshortToByteArray(ushort theShort)
-        //{
-        //    byte[] byteArray = new byte[2];
-        //    int i;
-        //    int shift;
-
-        //    for (i = 0, shift = 16; i < 2; i++, shift -= 8)
-        //        byteArray[i] = (byte)(0xFF & (theShort >> shift));
-
-        //    return byteArray;
-        //}
+        
 	}
 }

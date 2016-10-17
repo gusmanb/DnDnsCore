@@ -155,19 +155,11 @@ namespace DnDnsCore.Query
         {
             string dnsServer = string.Empty;
 
-            // Test for Unix/Linux OS
-            if (Tools.IsPlatformLinuxUnix())
-            {
-                dnsServer = await Tools.DiscoverUnixDnsServerAddress();
-            }
-            else
-            {
-                IPAddressCollection dnsServerCollection = Tools.DiscoverDnsServerAddresses();
-                if (dnsServerCollection.Count == 0)
-                    throw new Exception("Couldn't detect local DNS Server.");
+            IPAddressCollection dnsServerCollection = Tools.DiscoverDnsServerAddresses();
+            if (dnsServerCollection.Count == 0)
+                throw new Exception("Couldn't detect local DNS Server.");
 
-                dnsServer = dnsServerCollection[0].ToString();
-            }
+            dnsServer = dnsServerCollection[0].ToString();
 
             if (String.IsNullOrEmpty(dnsServer))
                 throw new Exception("Couldn't detect local DNS Server.");
@@ -192,9 +184,11 @@ namespace DnDnsCore.Query
         public async Task<DnsQueryResponse> Resolve(string dnsServer, string host, NsType queryType, NsClass queryClass, ProtocolType protocol, IMessageSecurityProvider messageSecurityProvider) 
 		{
             byte[] bDnsQuery = this.BuildDnsRequest(host, queryType, queryClass, protocol, messageSecurityProvider);
-			
-			// Connect to DNS server and get the record for the current server.
-			IPHostEntry ipe = await System.Net.Dns.GetHostEntryAsync(dnsServer);
+
+            new System.Net.Sockets.Socket(System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp).Dispose();
+
+            // Connect to DNS server and get the record for the current server.
+            IPHostEntry ipe = await Dns.GetHostEntryAsync(dnsServer);
 			IPAddress ipa = ipe.AddressList[0];
 			IPEndPoint ipep = new IPEndPoint(ipa, (int)UdpServices.Domain);
 
